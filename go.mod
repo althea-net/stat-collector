@@ -1,4 +1,4 @@
-module github.com/jtremback/stat-collector
+module github.com/althea-net/stat-collector
 
 go 1.12
 
