@@ -65,6 +65,21 @@ func bytesToGb(bytes float64) float64 {
 	return bytes / 1000000000
 }
 
+func fatal(err interface{}) {
+  var message string;
+
+   if v, ok := err.(string); ok {
+     message = v;
+   }
+   if v, ok := err.(error); ok {
+     message = v.Error();
+   } else {
+      // panic ?
+   }
+
+   log.Fatal("FATAL ERROR: " + message)
+}
+
 func callGraylog(settings Settings, direction string, wgKey string) *float64 {
 	graylogClient := http.Client{
 		Timeout: time.Second * 60,
@@ -77,7 +92,7 @@ func callGraylog(settings Settings, direction string, wgKey string) *float64 {
 	} else if direction == "down" {
 		directionString = "downloaded from exit"
 	} else {
-		log.Fatal("invalid direction argument")
+		fatal("invalid direction argument")
 	}
 
 	params := url.Values{
@@ -91,7 +106,7 @@ func callGraylog(settings Settings, direction string, wgKey string) *float64 {
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
 
 	req.SetBasicAuth(settings.GraylogUser, settings.GraylogPass)
@@ -99,13 +114,13 @@ func callGraylog(settings Settings, direction string, wgKey string) *float64 {
 
 	resp, err := graylogClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
 	defer resp.Body.Close()
 
 	bodyText, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
 
 	type GraylogRes struct {
@@ -208,7 +223,7 @@ func main() {
 
 			error: ` + fmt.Sprintf("%v", err)
 		}
-		log.Fatal(errString)
+		fatal(errString)
 	}
 
 	settings := Settings{
@@ -230,12 +245,12 @@ func main() {
 
 	meshMembers, err := getMeshMembers(settings)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
 
 	bwupCollection, err := getBWUPCollection(settings)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
 
 	// Loop which calls graylog, processes data, and saves and prints it
@@ -263,7 +278,7 @@ func main() {
 
 			_, err = bwupCollection.InsertOne(ctx, bwup)
 			if err != nil {
-				log.Fatal(err)
+				fatal(err)
 			}
 		}
 	}
